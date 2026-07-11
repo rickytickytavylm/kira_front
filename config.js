@@ -5,5 +5,5 @@ window.KIRA_CONFIG = {
   BACKEND_URL:
     location.hostname === "localhost" || location.hostname === "127.0.0.1"
       ? "http://localhost:8787"
-      : "https://REPLACE_WITH_YOUR_BACKEND_URL",
+      : "https://kirabackend-production.up.railway.app",
 };
