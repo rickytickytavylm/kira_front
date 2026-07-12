@@ -252,11 +252,6 @@ a { color: inherit; }
 .side-close:hover { background: var(--bg-2); }
 .side-new { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font: inherit; font-size: 15px; font-weight: 600; color: #fff; background: var(--ink); border: none; border-radius: 12px; padding: 12px; cursor: pointer; transition: background 0.2s; }
 .side-new:hover { background: #000; }
-.side-quick { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; }
-.side-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin: 6px 8px; }
-.qbtn { font: inherit; font-size: 14px; text-align: left; color: var(--ink); background: none; border: none; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: background 0.2s; }
-.qbtn:hover { background: var(--bg-2); }
-.qbtn-accent { color: var(--accent); font-weight: 600; }
 .side-list { flex: 1; overflow-y: auto; margin-top: 14px; display: flex; flex-direction: column; gap: 2px; }
 .chat-item { display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 10px 12px; cursor: pointer; color: var(--ink-soft); transition: background 0.2s, color 0.2s; }
 .chat-item:hover { background: var(--bg-2); }
@@ -305,6 +300,10 @@ a { color: inherit; }
 .chips { max-width: var(--maxw); margin: 0 auto 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .chip { font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; color: var(--ink-soft); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 15px; transition: transform 0.14s ease, border-color 0.2s, color 0.2s; }
 .chip:hover { transform: translateY(-1px); border-color: rgba(0, 0, 0, 0.2); color: var(--ink); }
+.chip-accent { color: var(--accent); border-color: rgba(10, 132, 255, 0.35); font-weight: 600; }
+.chip-accent:hover { border-color: var(--accent); color: var(--accent); }
+.stream-cursor { display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: text-bottom; background: var(--accent); animation: cursor-blink 0.85s step-end infinite; }
+@keyframes cursor-blink { 50% { opacity: 0; } }
 .composer-inner { max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column; gap: 6px; border-radius: 24px; padding: 12px 14px 10px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-md); transition: border-color 0.2s, box-shadow 0.2s; }
 .composer-inner:focus-within { border-color: rgba(0, 0, 0, 0.22); box-shadow: 0 10px 34px rgba(0, 0, 0, 0.10); }
 .composer-input { width: 100%; border: none; outline: none; resize: none; background: transparent; color: var(--ink); font: inherit; font-size: 16px; line-height: 1.5; max-height: 168px; padding: 4px 4px 2px; }

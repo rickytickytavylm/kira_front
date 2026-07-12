@@ -690,29 +690,31 @@
   $("#chatNew").addEventListener("click", () => newConversation(null));
   $("#chatNewTop").addEventListener("click", () => newConversation(null));
   $("#chatToSite").addEventListener("click", (e) => { e.preventDefault(); closeChat(); });
-  $$(".qbtn").forEach((b) => b.addEventListener("click", () => {
-    const q = b.dataset.quick;
-    if (q === "pricing") { closeDrawer(); openSub(); return; }
-    const seed = q === "relative" ? { who: "relative", category: "addiction" }
-      : q === "psychiatry" ? { who: "self", category: "psychiatry" }
-      : { who: "self", category: "addiction" };
-    newConversation(seed);
-  }));
 
-  // ─── Чипы-подсказки (стартовые) ───
+  // ─── Чипы-подсказки (только на старте, над полем ввода) ───
   function chipSet() {
     const p = profile || {};
-    if (p.category === "psychiatry") return [t("chip.psychiatry.1"), t("chip.psychiatry.2"), t("chip.psychiatry.3")];
-    if (p.who === "relative") return [t("chip.relative.1"), t("chip.relative.2"), t("chip.relative.3")];
-    return [t("chip.self.1"), t("chip.self.2"), t("chip.self.3")];
+    let keys;
+    if (p.category === "psychiatry") keys = ["chip.psychiatry.1", "chip.psychiatry.2", "chip.psychiatry.3"];
+    else if (p.who === "relative") keys = ["chip.relative.1", "chip.relative.2", "chip.relative.3"];
+    else keys = ["chip.self.1", "chip.self.2", "chip.self.3"];
+    return [
+      ...keys.map((k) => ({ text: t(k) })),
+      { text: t("chat.quick.pricing"), accent: true, action: "pricing" },
+    ];
   }
   function updateChips() {
     const hasUser = curMsgs().some((m) => m.role === "user");
     if (hasUser) { chipsEl.style.display = "none"; chipsEl.innerHTML = ""; return; }
-    chipsEl.innerHTML = chipSet().map((t) => `<button class="chip">${esc(t)}</button>`).join("");
+    chipsEl.innerHTML = chipSet().map((c) => {
+      const cls = `chip${c.accent ? " chip-accent" : ""}`;
+      const attrs = c.action ? ` data-action="${c.action}"` : "";
+      return `<button type="button" class="${cls}"${attrs}>${esc(c.text)}</button>`;
+    }).join("");
     chipsEl.style.display = "flex";
     chipsEl.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
-      input.value = c.textContent; autoGrow(); input.focus();
+      if (c.dataset.action === "pricing") { openSub(); return; }
+      submit(c.textContent);
     }));
   }
 
@@ -765,10 +767,24 @@
     wrap.append(av, b); messagesEl.append(wrap); stick(); return b;
   }
   function typing() { const b = addMessage("kira", ""); b.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>'; return b; }
-  function stick() { chatScroll.scrollTop = chatScroll.scrollHeight; }
+  function stick(force = false) {
+    const el = chatScroll;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
+    if (force || nearBottom) el.scrollTop = el.scrollHeight;
+  }
 
-  async function submit() {
-    const text = input.value.trim();
+  let streamRaf = 0;
+  function paintStream(bubble, text, live) {
+    if (streamRaf) cancelAnimationFrame(streamRaf);
+    streamRaf = requestAnimationFrame(() => {
+      streamRaf = 0;
+      bubble.innerHTML = markup(text) + (live ? '<span class="stream-cursor" aria-hidden="true"></span>' : "");
+      stick();
+    });
+  }
+
+  async function submit(prefill) {
+    const text = (typeof prefill === "string" ? prefill : input.value).trim();
     if (!text || busy) return;
     if (!curChat()) newConversation(profile);
     input.value = ""; autoGrow(); setBusy(true);
@@ -793,13 +809,26 @@
           const em = block.match(/^event:\s*(.+)$/m), dm = block.match(/^data:\s*(.+)$/m);
           if (!dm) continue; let data; try { data = JSON.parse(dm[1]); } catch { continue; }
           const ev = em ? em[1].trim() : "message";
-          if (ev === "delta" && data.text) { if (!started) { bubble.innerHTML = ""; started = true; } acc += data.text; bubble.innerHTML = markup(acc); stick(); }
-          else if (ev === "error") bubble.innerHTML = markup(data.message || "Что-то пошло не так. Попробуйте ещё раз.");
+          if (ev === "delta" && data.text) {
+            if (!started) { bubble.innerHTML = ""; started = true; }
+            acc += data.text;
+            paintStream(bubble, acc, true);
+          } else if (ev === "error") {
+            if (streamRaf) cancelAnimationFrame(streamRaf);
+            bubble.innerHTML = markup(data.message || "Что-то пошло не так. Попробуйте ещё раз.");
+          } else if (ev === "done") {
+            if (acc) paintStream(bubble, acc, false);
+          }
         }
       }
       if (!acc) bubble.innerHTML = markup("Не удалось получить ответ. Попробуйте ещё раз чуть позже.");
-      else { msgs.push({ role: "assistant", content: acc }); saveChats(); }
+      else {
+        if (streamRaf) cancelAnimationFrame(streamRaf);
+        bubble.innerHTML = markup(acc);
+        msgs.push({ role: "assistant", content: acc }); saveChats();
+      }
     } catch {
+      if (streamRaf) cancelAnimationFrame(streamRaf);
       bubble.innerHTML = markup(BACKEND ? "Не удалось связаться с сервером Киры. Проверьте бэкенд и адрес в config.js." : "Не задан адрес бэкенда в config.js.");
     } finally { setBusy(false); input.focus(); }
   }
